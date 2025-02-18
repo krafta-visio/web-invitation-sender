@@ -1,211 +1,22 @@
-$(document).ready(async function () {
-	
-    const storageAvailable = (type) => {
-        try {
-            let storage = window[type], test = "__storage_test__";
-            storage.setItem(test, test);
-            storage.removeItem(test);
-            return true;
-        } catch (e) {
-            return false;
-        }
-    };
-
-    const useLocalStorage = storageAvailable("localStorage");
-
-    // Fungsi untuk menyimpan ke LocalStorage atau IndexedDB
-    const saveData = async (key, value) => {
-        if (useLocalStorage) {
-            localStorage.setItem(key, value);
-        } else {
-            let db = await openDB();
-            let tx = db.transaction("data", "readwrite");
-            let store = tx.objectStore("data");
-            store.put(value, key);
-            await tx.complete;
-        }
-        updatePreview(); // Perbarui tampilan saat data disimpan
-    };
-
-    // Fungsi untuk mengambil data
-    const getData = async (key, defaultValue) => {
-        if (useLocalStorage) {
-            return localStorage.getItem(key) || defaultValue;
-        } else {
-            let db = await openDB();
-            let tx = db.transaction("data", "readonly");
-            let store = tx.objectStore("data");
-            let value = await store.get(key);
-            return value || defaultValue;
-        }
-    };
-
-    // Fungsi untuk membuka IndexedDB
-    const openDB = async () => {
-        return new Promise((resolve, reject) => {
-            let request = indexedDB.open("KraftaPrefs", 1);
-            request.onupgradeneeded = (event) => {
-                let db = event.target.result;
-                if (!db.objectStoreNames.contains("data")) {
-                    db.createObjectStore("data");
-                }
-            };
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    };
-
-    // Data default
-    const defaultPesan1 = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\nTanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara(i) untuk menghadiri acara pernikahan kami.";
-    const defaultPesan2 = "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara(i) berkenan untuk hadir dan memberikan doa restu.\nAtas kehadiran dan do'a restunya kami ucapkan terima kasih.\nWassalamu'alaikum Warahmatullahi Wabarakatuh.";
-    const defaultDirektori = "fullan-fullannah";
-
-    // Mengisi nilai awal dari penyimpanan
-    $("#direktoriUndangan").val(await getData("direktoriUndangan", defaultDirektori));
-    $("#pesan1").val(await getData("pesan1", defaultPesan1));
-    $("#pesan2").val(await getData("pesan2", defaultPesan2));
-
-
-
-	const toTitleCase = (str) => {
-		return str
-			.split('-') // Pisahkan berdasarkan tanda "-"
-			.map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Ubah huruf pertama jadi kapital
-			.join(' - '); // Gabungkan kembali dengan " - "
-	};
-
-
-    // Fungsi untuk memperbarui tampilan preview
-    const updatePreview = async () => {
-        let pesan1Value = await getData("pesan1", defaultPesan1);
-        let pesan2Value = await getData("pesan2", defaultPesan2);
-        let direktoriValue = await getData("direktoriUndangan", defaultDirektori);
-
-		$("#previewPesanUndangan").html(
-			"Kepada Yth.<br>Bapak/Ibu/Saudara(i)<br><b>&lt;&lt;NAMA_PENERIMA_UDANGAN&gt;&gt;</b><br><br>" + 
-			pesan1Value.replace(/\n/g, "<br>") + "<br><br>" + 
-			"Berikut link untuk info lengkap dari acara kami :<br>" + "<b>&lt;&lt;LINK_UNDANGAN_WEB&gt;&gt;</b>" + "<br><br>" +
-			pesan2Value.replace(/\n/g, "<br>") + "<br><br>" + 
-			"Hormat Kami :<br><strong>" + toTitleCase(direktoriValue) + "</strong>"
-		);
-		
-    };
-
-    // Jalankan update pertama kali
-    updatePreview();
-
-    // Event listener untuk menyimpan dan memperbarui preview saat input berubah
-    $("#pesan1").on("input", function () { saveData("pesan1", $(this).val()); });
-    $("#pesan2").on("input", function () { saveData("pesan2", $(this).val()); });
-    $("#direktoriUndangan").on("input", function () { saveData("direktoriUndangan", $(this).val()); });
-
-    // Live validation input direktori
-    $("#direktoriUndangan").on("input", function() {
-        let value = $(this).val();
-        value = value.replace(/[^a-z0-9-]/g, ''); // Hanya karakter a-z, 0-9, dan '-'
-        $(this).val(value);
-    });
-
-    // Live validation input number
-    $("#nomorWAPenerima").on("input", function () {
-        let value = $(this).val();
-        value = value.replace(/[^0-9]/g, '');
-        if (!value.startsWith("0") && !value.startsWith("62")) {
-            value = "0";
-        }
-        $(this).val(value);
-    });
-
-    // Simpan konsep pesan saat tombol diklik
-    $("#simpanKonsepPesan").on("click", async function () {
-        let pesan1Value = $("#pesan1").val();
-        let pesan2Value = $("#pesan2").val();
-
-        await saveData("pesan1", pesan1Value);
-        await saveData("pesan2", pesan2Value);
-
-        // Tutup modal setelah menyimpan
-        $("#modalEditKonsep").modal("hide");
-    });
-
-
-
-	// Fungsi untuk mengecek input dan menonaktifkan/mengaktifkan tombol
-    function validateInputs() {
-        let nomorWA = $("#nomorWAPenerima").val().trim();
-        let namaPenerima = $("#namaPenerima").val().trim();
-
-		if (nomorWA === "" && namaPenerima === "") {
-			// Jika nomorWA dan namaPenerima kosong, kedua tombol disabled
-			$("#btnKirimViaWhatsapp, #btnSalinPesanUndangan").prop("disabled", true);
-		} else if (nomorWA !== "" && namaPenerima === "") {
-			// Jika nomorWA ada tetapi namaPenerima kosong, kedua tombol disabled
-			$("#btnKirimViaWhatsapp, #btnSalinPesanUndangan").prop("disabled", true);
-		} else if (nomorWA === "" && namaPenerima !== "") {
-			// Jika nomorWA kosong tetapi namaPenerima ada, btnKirimViaWhatsapp disabled, btnSalinPesanUndangan enabled
-			$("#btnKirimViaWhatsapp").prop("disabled", true);
-			$("#btnSalinPesanUndangan").prop("disabled", false);
-		} else {
-			// Jika nomorWA dan namaPenerima ada, kedua tombol enabled
-			$("#btnKirimViaWhatsapp, #btnSalinPesanUndangan").prop("disabled", false);
-		}
-    }
-
-    // Panggil validasi saat input berubah
-    $("#nomorWAPenerima, #namaPenerima").on("input", validateInputs);
-
-    // Fungsi untuk membentuk pesan undangan
-    function generatePesanUndangan() {
-        let namaPenerima = $("#namaPenerima").val().trim();
-        let direktoriUndangan = $("#direktoriUndangan").val().trim() || "fullan-fullannah";
-		let namapenutup = toTitleCase(direktoriUndangan);
-        let pesan1 = $("#pesan1").val().trim() || "Assalamu'alaikum Warahmatullahi Wabarakatuh. Tanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara(i) untuk menghadiri acara pernikahan kami.";
-        let pesan2 = $("#pesan2").val().trim() || "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara(i) berkenan untuk hadir dan memberikan doa restu. Atas kehadiran dan do'a restunya kami ucapkan terima kasih. Wassalamu'alaikum Warahmatullahi Wabarakatuh.";
-        
-        let linkUndangan = `https://krafta-ampana.github.io/${direktoriUndangan}/?tamu=${encodeURIComponent(namaPenerima)}`;
-
-        return `Kepada Yth.
+$(document).ready(async()=>{const r={PESAN_1:"Assalamu'alaikum Warahmatullahi Wabarakatuh.\nTanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara(i) untuk menghadiri acara pernikahan kami.",PESAN_2:"Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara(i) berkenan untuk hadir dan memberikan doa restu.\nAtas kehadiran dan do'a restunya kami ucapkan terima kasih.\nWassalamu'alaikum Warahmatullahi Wabarakatuh.",DIREKTORI:"fullan-fullannah"},n={async initialize(){this.useLocalStorage=this.checkStorageAvailability("localStorage"),this.useLocalStorage||await this.setupIndexedDB()},checkStorageAvailability(a){try{var e=window[a],t="__storage_test__";return e.setItem(t,t),e.removeItem(t),!0}catch(a){return!1}},async setupIndexedDB(){return new Promise((a,e)=>{if(window.indexedDB){const t=indexedDB.open("KraftaPrefs",1);t.onupgradeneeded=a=>{a=a.target.result;a.objectStoreNames.contains("data")||a.createObjectStore("data")},t.onsuccess=()=>a(t.result),t.onerror=()=>e(t.error)}else e(new Error("IndexedDB not supported"))})},async save(a,e){try{if(this.useLocalStorage)localStorage.setItem(a,e);else{const t=(await this.setupIndexedDB()).transaction("data","readwrite");t.objectStore("data").put(e,a),await new Promise(a=>t.oncomplete=a)}}catch(a){throw console.error("Storage save error:",a),a}},async get(a,e=""){try{if(this.useLocalStorage)return localStorage.getItem(a)||e;const t=(await this.setupIndexedDB()).transaction("data","readonly").objectStore("data").get(a);return new Promise(a=>{t.onsuccess=()=>a(t.result||e),t.onerror=()=>a(e)})}catch(a){return console.error("Storage get error:",a),e}}};function i(a){return a.split("-").map(a=>a.charAt(0).toUpperCase()+a.slice(1)).join(" - ")}const o={async update(){var[a,e,t]=await Promise.all([n.get("pesan1",r.PESAN_1),n.get("pesan2",r.PESAN_2),n.get("direktoriUndangan",r.DIREKTORI)]),a=`
+Kepada Yth.<br>
+Bapak/Ibu/Saudara(i)<br>
+<b>&lt;&lt;NAMA_PENERIMA_UDANGAN&gt;&gt;</b><br><br>
+${a.replace(/\n/g,"<br>")}<br><br>
+Berikut link untuk info lengkap dari acara kami:<br>
+<b>&lt;&lt;LINK_UNDANGAN_WEB&gt;&gt;</b><br><br>
+${e.replace(/\n/g,"<br>")}<br><br>
+Hormat Kami:<br><strong>${i(t)}</strong>
+`;$("#previewPesanUndangan").html(a)}},s={validateDirectory(a){return a.replace(/[^a-z0-9-]/g,"")},validatePhoneNumber(a){let e=a.replace(/[^0-9]/g,"");return e=e.startsWith("0")||e.startsWith("62")?e:"0"},validateFormInputs(){var a=$("#nomorWAPenerima").val().trim(),e=$("#namaPenerima").val().trim(),t=a&&e,a=!a&&!e;$("#btnKirimViaWhatsapp").prop("disabled",!t),$("#btnSalinPesanUndangan").prop("disabled",a||!e)}},t={createInvitation(){var a=$("#namaPenerima").val().trim(),e=$("#direktoriUndangan").val().trim()||r.DIREKTORI,t=$("#pesan1").val().trim()||r.PESAN_1,n=$("#pesan2").val().trim()||r.PESAN_2;return`Kepada Yth.
 Bapak/Ibu/Saudara(i)
-*${namaPenerima}*
+*${a}*
 
-${pesan1}
+${t}
 
 Berikut link untuk info lengkap dari acara kami:
-${linkUndangan}
+${`https://krafta-ampana.github.io/${e}/?tamu=`+encodeURIComponent(a)}
 
-${pesan2}
+${n}
 
 Hormat Kami:
-*${namapenutup}*
-        `;
-    }
-
-    // Tombol Kirim via WhatsApp
-    $("#btnKirimViaWhatsapp").on("click", function () {
-        let nomorWA = $("#nomorWAPenerima").val().trim();
-        let pesanUndangan = generatePesanUndangan();
-
-        // Pastikan nomor diawali dengan +62 atau 62 jika menggunakan format 08
-        if (nomorWA.startsWith("08")) {
-            nomorWA = "62" + nomorWA.substring(1);
-        }
-
-        let whatsappLink = `https://wa.me/${nomorWA}?text=${encodeURIComponent(pesanUndangan)}`;
-        window.open(whatsappLink, "_blank");
-    });
-
-    // Tombol Salin Pesan
-    $("#btnSalinPesanUndangan").on("click", function () {
-        let pesanUndangan = generatePesanUndangan();
-        let tempTextArea = $("<textarea>");
-        $("body").append(tempTextArea);
-        tempTextArea.val(pesanUndangan).select();
-        document.execCommand("copy");
-        tempTextArea.remove();
-        alert("Pesan undangan berhasil disalin!");
-    });
-
-    // Panggil validasi awal saat halaman dimuat
-    validateInputs();
-
-});
+*${i(e)}*`}};function l(){$("#pesan1, #pesan2, #direktoriUndangan").on("input",async function(){await n.save(this.id,$(this).val()),o.update()}),$("#direktoriUndangan").on("input",function(){$(this).val(s.validateDirectory($(this).val()))}),$("#nomorWAPenerima").on("input",function(){$(this).val(s.validatePhoneNumber($(this).val())),s.validateFormInputs()}),$("#namaPenerima").on("input",s.validateFormInputs),$("#btnKirimViaWhatsapp").click(()=>{var a=function(a){let e=a.replace(/[^0-9]/g,"");return e=(e=e.startsWith("08")?"62"+e.slice(1):e).startsWith("62")?e:"62"+e}($("#nomorWAPenerima").val()),e=encodeURIComponent(t.createInvitation());window.open(`https://wa.me/${a}?text=`+e,"_blank")}),$("#btnSalinPesanUndangan").click(()=>{var a=$("<textarea>").val(t.createInvitation());$("body").append(a),a.select(),document.execCommand("copy"),a.remove(),alert("Pesan berhasil disalin!")}),$("#simpanKonsepPesan").click(async()=>{await Promise.all([n.save("pesan1",$("#pesan1").val()),n.save("pesan2",$("#pesan2").val())]),$("#modalEditKonsep").modal("hide")})}!async function(){var a,e,t;await n.initialize(),a=await n.get("direktoriUndangan",r.DIREKTORI),e=await n.get("pesan1",r.PESAN_1),t=await n.get("pesan2",r.PESAN_2),$("#direktoriUndangan").val(a),$("#pesan1").val(e),await!$("#pesan2").val(t),l(),o.update(),s.validateFormInputs()}().catch(a=>{console.error("Application initialization failed:",a),alert("Terjadi kesalahan saat memulai aplikasi")})});
