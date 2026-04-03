@@ -1,22 +1,191 @@
-$(document).ready(async()=>{const r={PESAN_1:"Assalamu'alaikum Warahmatullahi Wabarakatuh.\nTanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara(i) untuk menghadiri acara pernikahan kami.",PESAN_2:"Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara(i) berkenan untuk hadir dan memberikan doa restu.\nAtas kehadiran dan do'a restunya kami ucapkan terima kasih.\nWassalamu'alaikum Warahmatullahi Wabarakatuh.",DIREKTORI:"fullan-fullannah"},n={async initialize(){this.useLocalStorage=this.checkStorageAvailability("localStorage"),this.useLocalStorage||await this.setupIndexedDB()},checkStorageAvailability(a){try{var e=window[a],t="__storage_test__";return e.setItem(t,t),e.removeItem(t),!0}catch(a){return!1}},async setupIndexedDB(){return new Promise((a,e)=>{if(window.indexedDB){const t=indexedDB.open("KraftaPrefs",1);t.onupgradeneeded=a=>{a=a.target.result;a.objectStoreNames.contains("data")||a.createObjectStore("data")},t.onsuccess=()=>a(t.result),t.onerror=()=>e(t.error)}else e(new Error("IndexedDB not supported"))})},async save(a,e){try{if(this.useLocalStorage)localStorage.setItem(a,e);else{const t=(await this.setupIndexedDB()).transaction("data","readwrite");t.objectStore("data").put(e,a),await new Promise(a=>t.oncomplete=a)}}catch(a){throw console.error("Storage save error:",a),a}},async get(a,e=""){try{if(this.useLocalStorage)return localStorage.getItem(a)||e;const t=(await this.setupIndexedDB()).transaction("data","readonly").objectStore("data").get(a);return new Promise(a=>{t.onsuccess=()=>a(t.result||e),t.onerror=()=>a(e)})}catch(a){return console.error("Storage get error:",a),e}}};function i(a){return a.split("-").map(a=>a.charAt(0).toUpperCase()+a.slice(1)).join(" - ")}const o={async update(){var[a,e,t]=await Promise.all([n.get("pesan1",r.PESAN_1),n.get("pesan2",r.PESAN_2),n.get("direktoriUndangan",r.DIREKTORI)]),a=`
+$(document).ready(async () => {
+    const r = {
+        PESAN_1: "Assalamu'alaikum Warahmatullahi Wabarakatuh.\nTanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara(i) untuk menghadiri acara pernikahan kami.",
+        PESAN_2: "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara(i) berkenan untuk hadir dan memberikan doa restu.\nAtas kehadiran dan do'a restunya kami ucapkan terima kasih.\nWassalamu'alaikum Warahmatullahi Wabarakatuh.",
+        DIREKTORI: "fullan-fullannah"
+    }
+      , n = {
+        async initialize() {
+            this.useLocalStorage = this.checkStorageAvailability("localStorage"),
+            this.useLocalStorage || await this.setupIndexedDB()
+        },
+        checkStorageAvailability(a) {
+            try {
+                var e = window[a]
+                  , t = "__storage_test__";
+                return e.setItem(t, t),
+                e.removeItem(t),
+                !0
+            } catch (a) {
+                return !1
+            }
+        },
+        async setupIndexedDB() {
+            return new Promise( (a, e) => {
+                if (window.indexedDB) {
+                    const t = indexedDB.open("KraftaPrefs", 1);
+                    t.onupgradeneeded = a => {
+                        a = a.target.result;
+                        a.objectStoreNames.contains("data") || a.createObjectStore("data")
+                    }
+                    ,
+                    t.onsuccess = () => a(t.result),
+                    t.onerror = () => e(t.error)
+                } else
+                    e(new Error("IndexedDB not supported"))
+            }
+            )
+        },
+        async save(a, e) {
+            try {
+                if (this.useLocalStorage)
+                    localStorage.setItem(a, e);
+                else {
+                    const t = (await this.setupIndexedDB()).transaction("data", "readwrite");
+                    t.objectStore("data").put(e, a),
+                    await new Promise(a => t.oncomplete = a)
+                }
+            } catch (a) {
+                throw console.error("Storage save error:", a),
+                a
+            }
+        },
+        async get(a, e="") {
+            try {
+                if (this.useLocalStorage)
+                    return localStorage.getItem(a) || e;
+                const t = (await this.setupIndexedDB()).transaction("data", "readonly").objectStore("data").get(a);
+                return new Promise(a => {
+                    t.onsuccess = () => a(t.result || e),
+                    t.onerror = () => a(e)
+                }
+                )
+            } catch (a) {
+                return console.error("Storage get error:", a),
+                e
+            }
+        }
+    };
+    function i(a) {
+        return a.split("-").map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(" - ")
+    }
+    const o = {
+        async update() {
+            var [a,e,t] = await Promise.all([n.get("pesan1", r.PESAN_1), n.get("pesan2", r.PESAN_2), n.get("direktoriUndangan", r.DIREKTORI)])
+              , a = `
 Kepada Yth.<br>
 Bapak/Ibu/Saudara(i)<br>
 <b>&lt;&lt;NAMA_PENERIMA_UDANGAN&gt;&gt;</b><br><br>
-${a.replace(/\n/g,"<br>")}<br><br>
+${a.replace(/\n/g, "<br>")}<br><br>
 Berikut link untuk info lengkap dari acara kami:<br>
 <b>&lt;&lt;LINK_UNDANGAN_WEB&gt;&gt;</b><br><br>
-${e.replace(/\n/g,"<br>")}<br><br>
+${e.replace(/\n/g, "<br>")}<br><br>
 Hormat Kami:<br><strong>${i(t)}</strong>
-`;$("#previewPesanUndangan").html(a)}},s={validateDirectory(a){return a.replace(/[^a-z0-9-]/g,"")},validatePhoneNumber(a){let e=a.replace(/[^0-9]/g,"");return e=e.startsWith("0")||e.startsWith("62")?e:"0"},validateFormInputs(){var a=$("#nomorWAPenerima").val().trim(),e=$("#namaPenerima").val().trim(),t=a&&e,a=!a&&!e;$("#btnKirimViaWhatsapp").prop("disabled",!t),$("#btnSalinPesanUndangan").prop("disabled",a||!e)}},t={createInvitation(){var a=$("#namaPenerima").val().trim(),e=$("#direktoriUndangan").val().trim()||r.DIREKTORI,t=$("#pesan1").val().trim()||r.PESAN_1,n=$("#pesan2").val().trim()||r.PESAN_2;return`Kepada Yth.
+`;
+            $("#previewPesanUndangan").html(a)
+        }
+    }
+      , s = {
+        validateDirectory(a) {
+            return a.replace(/[^a-z0-9-]/g, "")
+        },
+        validatePhoneNumber(a) {
+            let e = a.replace(/[^0-9]/g, "");
+            return e = e.startsWith("0") || e.startsWith("62") ? e : "0"
+        },
+        validateFormInputs() {
+            var a = $("#nomorWAPenerima").val().trim()
+              , e = $("#namaPenerima").val().trim()
+              , t = a && e
+              , a = !a && !e;
+            $("#btnKirimViaWhatsapp").prop("disabled", !t),
+            $("#btnSalinPesanUndangan").prop("disabled", a || !e)
+        }
+    }
+      , t = {
+        createInvitation() {
+            var a = $("#namaPenerima").val().trim()
+              , e = $("#direktoriUndangan").val().trim() || r.DIREKTORI
+              , t = $("#pesan1").val().trim() || r.PESAN_1
+              , n = $("#pesan2").val().trim() || r.PESAN_2;
+            return `Kepada Yth.
 Bapak/Ibu/Saudara(i)
 *${a}*
 
 ${t}
 
 Berikut link untuk info lengkap dari acara kami:
-${`https://krafta-ampana.github.io/${e}/?tamu=`+encodeURIComponent(a)}
+${`https://krafta-ampana.github.io/${e}/?tamu=` + encodeURIComponent(a)}
 
 ${n}
 
 Hormat Kami:
-*${i(e)}*`}};function l(){$("#pesan1, #pesan2, #direktoriUndangan").on("input",async function(){await n.save(this.id,$(this).val()),o.update()}),$("#direktoriUndangan").on("input",function(){$(this).val(s.validateDirectory($(this).val()))}),$("#nomorWAPenerima").on("input",function(){$(this).val(s.validatePhoneNumber($(this).val())),s.validateFormInputs()}),$("#namaPenerima").on("input",s.validateFormInputs),$("#btnKirimViaWhatsapp").click(()=>{var a=function(a){let e=a.replace(/[^0-9]/g,"");return e=(e=e.startsWith("08")?"62"+e.slice(1):e).startsWith("62")?e:"62"+e}($("#nomorWAPenerima").val()),e=encodeURIComponent(t.createInvitation());window.open(`https://wa.me/${a}?text=`+e,"_blank")}),$("#btnSalinPesanUndangan").click(()=>{var a=$("<textarea>").val(t.createInvitation());$("body").append(a),a.select(),document.execCommand("copy"),a.remove(),alert("Pesan berhasil disalin!")}),$("#simpanKonsepPesan").click(async()=>{await Promise.all([n.save("pesan1",$("#pesan1").val()),n.save("pesan2",$("#pesan2").val())]),$("#modalEditKonsep").modal("hide")})}!async function(){var a,e,t;await n.initialize(),a=await n.get("direktoriUndangan",r.DIREKTORI),e=await n.get("pesan1",r.PESAN_1),t=await n.get("pesan2",r.PESAN_2),$("#direktoriUndangan").val(a),$("#pesan1").val(e),await!$("#pesan2").val(t),l(),o.update(),s.validateFormInputs()}().catch(a=>{console.error("Application initialization failed:",a),alert("Terjadi kesalahan saat memulai aplikasi")})});
+*${i(e)}*`
+        }
+    };
+    function l() {
+        $("#pesan1, #pesan2, #direktoriUndangan").on("input", async function() {
+            await n.save(this.id, $(this).val()),
+            o.update()
+        }),
+        $("#direktoriUndangan").on("input", function() {
+            $(this).val(s.validateDirectory($(this).val()))
+        }),
+        $("#nomorWAPenerima").on("input", function() {
+            $(this).val(s.validatePhoneNumber($(this).val())),
+            s.validateFormInputs()
+        }),
+        $("#namaPenerima").on("input", s.validateFormInputs),
+        $("#btnKirimViaWhatsapp").click( () => {
+            var a = function(a) {
+                let e = a.replace(/[^0-9]/g, "");
+                return e = (e = e.startsWith("08") ? "62" + e.slice(1) : e).startsWith("62") ? e : "62" + e
+            }($("#nomorWAPenerima").val())
+              , e = encodeURIComponent(t.createInvitation());
+            window.open(`https://wa.me/${a}?text=` + e, "_blank")
+        }
+        ),
+        $("#btnSalinPesanUndangan").click( async () => {
+            const e = t.createInvitation();
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(e);
+                    alert("Pesan berhasil disalin!");
+                    return;
+                } catch (err) {
+                    console.warn("Clipboard API failed:", err);
+                }
+            }
+            var a = $("<textarea>").css({ position: "absolute", left: "-9999px" }).val(e);
+            $("body").append(a);
+            a.select();
+            document.execCommand("copy");
+            a.remove();
+            alert("Pesan berhasil disalin!");
+        }
+        ),
+        $("#simpanKonsepPesan").click(async () => {
+            await Promise.all([n.save("pesan1", $("#pesan1").val()), n.save("pesan2", $("#pesan2").val())]),
+            $("#modalEditKonsep").modal("hide")
+        }
+        )
+    }
+    !async function() {
+        var a, e, t;
+        await n.initialize(),
+        a = await n.get("direktoriUndangan", r.DIREKTORI),
+        e = await n.get("pesan1", r.PESAN_1),
+        t = await n.get("pesan2", r.PESAN_2),
+        $("#direktoriUndangan").val(a),
+        $("#pesan1").val(e),
+        await !$("#pesan2").val(t),
+        l(),
+        o.update(),
+        s.validateFormInputs()
+    }().catch(a => {
+        console.error("Application initialization failed:", a),
+        alert("Terjadi kesalahan saat memulai aplikasi")
+    }
+    )
+}
+);
