@@ -1,47 +1,56 @@
 @import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap');
 
-body{
-	font-family: "Google Sans", sans-serif;
-	font-optical-sizing: auto;
-	font-weight: <weight>;
-	font-style: normal;
-	font-variation-settings:
-	"GRAD" 0;
+body {
+    font-family: "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.callout {
-  padding: 20px;
-  margin: 20px 0;
-  border: 1px solid #eee;
-  border-left-width: 5px;
-  border-radius: 3px;
-  h4 {
-    margin-top: 0;
-    margin-bottom: 5px;
-  }
-  p:last-child {
-    margin-bottom: 0;
-  }
-  code {
-    border-radius: 3px;
-  }
-  & + .bs-callout {
-    margin-top: -5px;
-  }
-}
-@each $name,$color in (default,#777),(primary,#428bca),(success,#5cb85c),(danger,#d9534f),(warning,#f0ad4e),(info,#5bc0de), (bdc,#29527a) {
-  .callout-#{$name} {
-    border-left-color: $color;
-    h4 {
-      color: $color;
-    }
-  }
+#previewPesanUndangan {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    word-break: break-word;
+    color: #2d3748;
 }
 
+#previewPesanUndangan b,
+#previewPesanUndangan strong {
+    color: #1a202c;
+    font-weight: 700;
+}
 
+/* Dark Mode Preview Styling */
+.dark #previewPesanUndangan {
+    color: #e2e8f0;
+}
 
+.dark #previewPesanUndangan b,
+.dark #previewPesanUndangan strong {
+    color: #f8fafc;
+}
 
-#previewPesanUndangan{
-	font-size: 10pt;
-	font-style: italic;
+/* Toast Notification Styling */
+.toast-item {
+    background: #1f2937;
+    color: #f9fafb;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0;
+    transform: translateY(1rem);
+    transition: all 0.25s ease-out;
+}
+
+.toast-item.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dark .toast-item {
+    background: #111827;
+    color: #f9fafb;
+    border: 1px solid #374151;
 }
